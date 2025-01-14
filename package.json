@@ -25,7 +25,9 @@
   },
   "homepage": "https://github.com/Milk-Cool/LetoBet#readme",
   "dependencies": {
-    "node-telegram-bot-api": "^0.66.0"
+    "dotenv": "^16.4.7",
+    "node-telegram-bot-api": "^0.66.0",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/node-telegram-bot-api": "^0.64.7"
