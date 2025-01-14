@@ -1,0 +1,33 @@
+{
+  "name": "letobet",
+  "version": "0.1.0",
+  "description": "Make bets on different events with you Letovo diploma points!",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Milk-Cool/LetoBet.git"
+  },
+  "keywords": [
+    "letovo",
+    "leto",
+    "bet",
+    "bets",
+    "sport"
+  ],
+  "author": "Milk_Cool",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Milk-Cool/LetoBet/issues"
+  },
+  "homepage": "https://github.com/Milk-Cool/LetoBet#readme",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "@types/node-telegram-bot-api": "^0.64.7"
+  }
+}
