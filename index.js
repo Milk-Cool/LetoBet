@@ -28,6 +28,7 @@ const db = new sqlite3.Database(process.env.DATABASE_PATH ?? "data.db");
  * @property {number} event_id - The event ID
  * @property {number} by_user - The ID of the user who placed the bet
  * @property {0 | 1} outcome - The outcome of the bet (0 for left, 1 for right)
+ * @property {number} amount - The size of the bet
  */
 
 
@@ -64,7 +65,8 @@ let tableInit = false;
         id INTEGER PRIMARY KEY,
         event_id INTEGER,
         by_user INTEGER,
-        outcome INTEGER
+        outcome INTEGER,
+        amount INTEGER
     )`); // where outcome is 0 or 1, where 0 is left and 1 is right
     tableInit = true;
 })();
@@ -166,10 +168,12 @@ export async function deductPointsFromBalance(id, points) {
  * @param {string} outcome_right The right outcome
  * @param {number} outcome_right_chance The right outcome's chance in (0, 1)
  * @param {Date} until The closing date
+ * @returns {Event} THe created event
  */
 export async function createEvent(description, outcome_left, outcome_left_chance, outcome_right, outcome_right_chance, until) {
-    return await adb.run(`INSERT INTO events (description, outcome_left, outcome_left_chance, outcome_right, outcome_right_chance, until)
+    await adb.run(`INSERT INTO events (description, outcome_left, outcome_left_chance, outcome_right, outcome_right_chance, until)
         VALUES (?, ?, ?, ?, ?, ?)`, [description, outcome_left, outcome_left_chance, outcome_right, outcome_right_chance, until.getTime()]);
+    return await adb.get("SELECT * FROM events ORDER BY id DESC LIMIT 1");
 }
 
 /**
@@ -225,9 +229,10 @@ export async function getBets(event_id) {
  * @param {number} telegram_id Telegram ID
  * @param {number} event_id Event ID
  * @param {0 | 1} outcome The outcome (0 = left, 1 = right)
+ * @param {number} amount The amount of points to place
  */
-export async function placeBet(telegram_id, event_id, outcome) {
+export async function placeBet(telegram_id, event_id, outcome, amount) {
     const user = await getUserByTelegramID(telegram_id);
     if(!user) return;
-    await adb.run(`INSERT INTO bets (event_id, by_user, outcome) VALUES (?, ?, ?)`, [event_id, user.id, outcome]);
+    await adb.run(`INSERT INTO bets (event_id, by_user, outcome, amount) VALUES (?, ?, ?, ?)`, [event_id, user.id, outcome, amount]);
 }

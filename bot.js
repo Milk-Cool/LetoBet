@@ -29,6 +29,13 @@ const buttonsMain = {
     ]
 }
 
+const buttonCancel = { text: Strings.CANCEL };
+const buttonsPlacing = {
+    keyboard: [
+        [buttonCancel]
+    ]
+};
+
 const bot = new TelegramBot(TOKEN, { polling: true });
 const app = express();
 
@@ -36,6 +43,8 @@ app.use(express.urlencoded({ extended: true }));
 
 /** @type {Record<number, number>} */
 let states = {};
+/** @type {Record<number, [number, number]>} */
+let placing = {};
 
 const prepare = async msg => {
     if(msg.chat.type !== "private") return false;
@@ -60,15 +69,27 @@ const sendEvents = async (id, events) => {
     if(events.length == 0)
         return await bot.sendMessage(id, Strings.NO_EVENTS);
     for(const event of events) {
-        const date = event.until;
+        const date = typeof event.until === "number" ? new Date(event.until) : event.until;
         await bot.sendMessage(id, Strings.NEW_EVENT
             .replace("[[description]]", event.description)
             .replace("[[outcome_left]]", event.outcome_left)
             .replace("[[outcome_left_chance]]", event.outcome_left_chance)
             .replace("[[outcome_right]]", event.outcome_right)
             .replace("[[outcome_right_chance]]", event.outcome_right_chance)
-            .replace("[[until]]", `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`)
-        );
+            .replace("[[until]]", `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`),
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: event.outcome_left,
+                        callback_data: "L" + event.id.toString()
+                    }, {
+                        text: event.outcome_right,
+                        callback_data: "R" + event.id.toString()
+                    }]
+                ]
+            }
+        });
     }
 };
 
@@ -110,6 +131,23 @@ bot.on("message", async msg => {
 bot.on("message", async msg => {
     if(!await prepare(msg)) return;
     if(states[msg.chat.id] !== State.LOGGED_IN) return;
+    if(msg.chat.id in placing) {
+        if(msg.text == Strings.CANCEL) {
+            delete placing[msg.chat.id];
+            await bot.sendMessage(msg.chat.id, Strings.CANCELLED);
+            await chooseAction(msg.chat.id);
+            return;
+        }
+        const user = await Bets.getUserByTelegramID(msg.chat.id);
+        const amount = parseInt(msg.text);
+        if(amount === NaN || amount < 1 || amount > user.balance)
+            return await bot.sendMessage(msg.chat.id, Strings.INVALID_BET, { reply_markup: buttonsPlacing });
+        await Bets.placeBet(msg.chat.id, placing[msg.chat.id][0], placing[msg.chat.id][1], amount);
+        await Bets.deductPointsFromBalance(user.id, amount);
+        delete placing[msg.chat.id];
+        await bot.sendMessage(msg.chat.id, Strings.PLACED);
+        return await chooseAction(msg.chat.id);
+    }
     switch(msg.text) {
         case Strings.BALANCE:
             const user = await Bets.getUserByTelegramID(msg.chat.id);
@@ -125,11 +163,26 @@ bot.on("message", async msg => {
     }
 });
 
+bot.on("callback_query", async query => {
+    // console.log(query);
+    if(!(query.from.id in states)) {
+        const user = await Bets.getUserByTelegramID(query.from.id);
+        if(!user) return;
+    }
+    if(query.data.length == 0) return;
+    const outcome = query.data[0] == "L" ? 0 : 1;
+    const event_id = parseInt(query.data.slice(1));
+    if(await Bets.getBet(query.from.id, event_id))
+        return await bot.sendMessage(query.from.id, Strings.ALREADY_PLACED);
+    placing[query.from.id] = [event_id, outcome];
+    await bot.sendMessage(query.from.id, Strings.ENTER_BET, { reply_markup: buttonsPlacing });
+});
+
 app.get("/", (_req, res) => res.sendFile(join(import.meta.dirname, "login.html")));
 app.get("/admin", (_req, res) => res.sendFile(join(import.meta.dirname, "admin.html")));
 app.post("/admin", async (req, res) => {
     /** @type {Bets.Event} */
-    const event = {
+    const eventJSON = {
         description: req.body.description,
         outcome_left: req.body.outcome_left,
         outcome_left_chance: parseFloat(req.body.outcome_left_chance),
@@ -137,7 +190,7 @@ app.post("/admin", async (req, res) => {
         outcome_right_chance: parseFloat(req.body.outcome_right_chance),
         until: new Date(parseInt(req.body.until)),
     };
-    await Bets.createEvent(event.description, event.outcome_left, event.outcome_left_chance, event.outcome_right, event.outcome_right_chance, event.until);
+    const event = await Bets.createEvent(eventJSON.description, eventJSON.outcome_left, eventJSON.outcome_left_chance, eventJSON.outcome_right, eventJSON.outcome_right_chance, eventJSON.until);
     for(const user of await Bets.getAllUsers()) {
         try {
             await sendEvents(user.telegram_id, [event]);

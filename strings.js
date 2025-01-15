@@ -19,4 +19,12 @@ export class Strings {
 
     static NEW_EVENT = "Событие:\n\n[[description]]\n[[outcome_left]] - [[outcome_left_chance]]%\n[[outcome_right]] - [[outcome_right_chance]]%\nДо [[until]]";
     static NO_EVENTS = "Сейчас событий нет :(";
+
+    static ALREADY_PLACED = "У нас уже есть твоя ставка на это событие!";
+
+    static ENTER_BET = "Введите размер ставки:";
+    static INVALID_BET = "Такое количество поставить нельзя!";
+    static PLACED = "Ставка поставлена!";
+    static CANCEL = "Отмена";
+    static CANCELLED = "Отменено!";
 }
