@@ -2,6 +2,7 @@ const { ADMIN } = process.env;
 
 export class Strings {
     static HELLO = `Привет!\nЭтот бот позволяет ставить баллы Диплома Летово на события в школе.\nНажми кнопку ниже, чтобы войти!\n\nНе доверяешь? Посмотри исходный код! https://github.com/Milk-Cool/LetoBet или свяжись с админом ${ADMIN}`;
+    static LOG_IN_BUTTON = "Войти";
     
     static LOGGING_IN = "Входим...";
     static LOGGED_IN = "Вошли!";
