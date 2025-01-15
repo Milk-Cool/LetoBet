@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- Yes, everything's in one file. -->
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        <title>LetoBet auth</title>
+        <style>
+            form {
+                position: fixed;
+                top: 50vh;
+                left: 50vw;
+                transform: translate(-50%, -50%);
+                text-align: center;
+            }
+            input {
+                border-radius: .5em;
+                margin: .5em;
+                padding: .5em;
+                font-size: larger;
+                cursor: pointer;
+            }
+            input[type="text"], input[type="password"] {
+                border: .2em solid darkmagenta;
+                color: black;
+                background: white;
+            }
+            input[type="submit"] {
+                border: none;
+                color: white;
+                background: darkmagenta;
+            }
+        </style>
+    </head>
+    <body>
+        <form>
+            <h1>Войти в LetoBet</h1>
+            <label for="username"><small>Имя пользователя (летовское)</small></label><br>
+            <input type="text" id="username" placeholder="Введи имя пользователя"><br>
+            <label for="password"><small>Пароль (летовский)</small></label><br>
+            <input type="password" id="password" placeholder="Введи пароль"><br>
+            <input type="submit" value="Let's go gambling!">
+        </form>
+        <script>
+            const form = document.querySelector("form");
+            form.addEventListener("submit", e => {
+                e.preventDefault();
+                const username = document.querySelector("#username").value;
+                const password = document.querySelector("#password").value;
+                console.log(`${username}:${password}`);
+                window.Telegram.WebApp.sendData(`${username}:${password}`);
+                // window.Telegram.WebApp.close();
+            });
+        </script>
+    </body>
+</html>
