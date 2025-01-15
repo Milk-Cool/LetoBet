@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>LetoBet admin</title>
+    </head>
+    <body>
+        <input type="datetime-local" id="datetime-local">
+        <button onclick='alert(new Date(document.querySelector("#datetime-local").value).getTime())'>Get time in MS</button>
+        <br><br><br><br>
+
+        <form method="post">
+            <input name="username" value="admin" hidden>
+            <input name="password" type="password" placeholder="Password"><br>
+            <input name="description" type="text" placeholder="Description"><br>
+            <input name="outcome_left" type="text" placeholder="Left outcome"><br>
+            <input name="outcome_left_chance" type="number" min="0.001" max="0.999" step="0.001" placeholder="Left outcome chance"><br>
+            <input name="outcome_right" type="text" placeholder="Right outcome"><br>
+            <input name="outcome_right_chance" type="number" min="0.001" max="0.999" step="0.001" placeholder="Right outcome chance"><br>
+            <b>Until: </b><input name="until" type="number"><br>
+            <input type="submit">
+        </form>
+    </body>
+</html>

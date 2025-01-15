@@ -178,7 +178,12 @@ export async function createEvent(description, outcome_left, outcome_left_chance
  * @returns {Event[]} Ongoing events
  */
 export async function getAllOngoingEvents() {
-    return await adb.all(`SELECT * FROM events WHERE until >= ?`, [new Date().getTime()]);
+    let events = await adb.all(`SELECT * FROM events WHERE until >= ?`, [new Date().getTime()]);
+    events = events.map(x => {
+        x.until = new Date(x.until);
+        return x;
+    });
+    return events;
 }
 
 /**
@@ -202,6 +207,16 @@ export async function getBet(telegram_id, event_id) {
     const user = await getUserByTelegramID(telegram_id);
     if(!user) return false;
     return await adb.get(`SELECT * FROM bets WHERE by_user = ? AND event_id = ?`, [user.id, event_id]);
+}
+
+/**
+ * Gets all bets on a specific event.
+ * 
+ * @param {number} event_id Event ID
+ * @returns {Bet[]} The bets
+ */
+export async function getBets(event_id) {
+    return await adb.all(`SELECT * FROM bets WHERE event_id = ?`, [event_id]);
 }
 
 /**

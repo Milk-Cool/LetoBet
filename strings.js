@@ -17,6 +17,6 @@ export class Strings {
 
     static BALANCE_IS = "Твой баланс:\n";
 
-    static NEW_EVENT = "Новое событие!\n\n[[description]]\n[[outcome_left]] - [[outcome_left_chance]]%\n[[outcome_right]] - [[outcome_right_chance]]%\nДо [[until]]";
+    static NEW_EVENT = "Событие:\n\n[[description]]\n[[outcome_left]] - [[outcome_left_chance]]%\n[[outcome_right]] - [[outcome_right_chance]]%\nДо [[until]]";
     static NO_EVENTS = "Сейчас событий нет :(";
 }

@@ -57,4 +57,7 @@ test("places a valid bet", async () => {
     expect(bet.event_id).toBe(event.id);
     expect(bet.by_user).toBe(user.id);
     expect(bet.outcome).toBe(outcome);
+
+    const bets = await Bets.getBets(event.id);
+    expect(bets[0]).toEqual(bet);
 });

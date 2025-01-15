@@ -7,6 +7,9 @@ import express from "express";
 import { join } from "path";
 import * as lk from "./lk.js";
 
+process.on("uncaughtException", e => console.error(e));
+process.on("unhandledRejection", e => console.error(e));
+
 const { TOKEN, HOST } = process.env;
 
 const buttonLogin = { text: Strings.LOG_IN_BUTTON, web_app: { url: HOST } };
@@ -28,6 +31,8 @@ const buttonsMain = {
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 const app = express();
+
+app.use(express.urlencoded({ extended: true }));
 
 /** @type {Record<number, number>} */
 let states = {};
@@ -55,7 +60,7 @@ const sendEvents = async (id, events) => {
     if(events.length == 0)
         return await bot.sendMessage(id, Strings.NO_EVENTS);
     for(const event of events) {
-        const date = new Date(event.until);
+        const date = event.until;
         await bot.sendMessage(id, Strings.NEW_EVENT
             .replace("[[description]]", event.description)
             .replace("[[outcome_left]]", event.outcome_left)
@@ -121,5 +126,26 @@ bot.on("message", async msg => {
 });
 
 app.get("/", (_req, res) => res.sendFile(join(import.meta.dirname, "login.html")));
+app.get("/admin", (_req, res) => res.sendFile(join(import.meta.dirname, "admin.html")));
+app.post("/admin", async (req, res) => {
+    /** @type {Bets.Event} */
+    const event = {
+        description: req.body.description,
+        outcome_left: req.body.outcome_left,
+        outcome_left_chance: parseFloat(req.body.outcome_left_chance),
+        outcome_right: req.body.outcome_right,
+        outcome_right_chance: parseFloat(req.body.outcome_right_chance),
+        until: new Date(parseInt(req.body.until)),
+    };
+    await Bets.createEvent(event.description, event.outcome_left, event.outcome_left_chance, event.outcome_right, event.outcome_right_chance, event.until);
+    for(const user of await Bets.getAllUsers()) {
+        try {
+            await sendEvents(user.telegram_id, [event]);
+        } catch(e) {
+            console.error(e);
+        }
+    }
+    res.send("ok!");
+});
 
 app.listen(8055);
