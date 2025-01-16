@@ -48,7 +48,6 @@
                 e.preventDefault();
                 const username = document.querySelector("#username").value;
                 const password = document.querySelector("#password").value;
-                console.log(`${username}:${password}`);
                 window.Telegram.WebApp.sendData(`${username}:${password}`);
                 // window.Telegram.WebApp.close();
             });
