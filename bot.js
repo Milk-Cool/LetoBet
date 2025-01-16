@@ -129,6 +129,7 @@ bot.on("message", async msg => {
 });
 
 bot.on("message", async msg => {
+    if(msg.web_app_data) return;
     if(!await prepare(msg)) return;
     if(states[msg.chat.id] !== State.LOGGED_IN) return;
     if(msg.chat.id in placing) {
