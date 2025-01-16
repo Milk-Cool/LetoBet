@@ -13,7 +13,7 @@ export class Strings {
     static ALL_EVENTS = "Все события";
     static BALANCE = "Проверить баланс";
     static UPDATE_BALANCE = "Обновить баланс";
-    static CHOOSE_ACTION = "Выберите действие:";
+    static CHOOSE_ACTION = "Выбери действие:";
 
     static BALANCE_IS = "Твой баланс:\n";
 
@@ -23,7 +23,7 @@ export class Strings {
     static ALREADY_PLACED = "У нас уже есть твоя ставка на это событие!";
     static EVENT_FINISHED = "Это событие уже закончилось!";
 
-    static ENTER_BET = "Введите размер ставки:";
+    static ENTER_BET = "Введи размер ставки:";
     static INVALID_BET = "Такое количество поставить нельзя!";
     static PLACED = "Ставка поставлена!";
     static CANCEL = "Отмена";
