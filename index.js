@@ -201,6 +201,25 @@ export async function checkEvent(id) {
 }
 
 /**
+ * Gets an event by their ID.
+ * 
+ * @param {number} id ID
+ * @returns {Event} The user
+ */
+export async function getEventByID(id) {
+    return await adb.get(`SELECT * FROM events WHERE id = ?`, [id]);
+}
+
+/**
+ * Finish the event
+ * 
+ * @param {number} id The event ID
+ */
+export async function finishEvent(id) {
+    return await adb.run(`UPDATE events SET until = ? WHERE id = ?`, [new Date().getTime(), id]);
+}
+
+/**
  * Gets a bet on a specific event by a specific user.
  * 
  * @param {number} telegram_id Telegram ID

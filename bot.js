@@ -10,7 +10,7 @@ import * as lk from "./lk.js";
 process.on("uncaughtException", e => console.error(e));
 process.on("unhandledRejection", e => console.error(e));
 
-const { TOKEN, HOST } = process.env;
+const { TOKEN, HOST, PASSWORD } = process.env;
 
 const buttonLogin = { text: Strings.LOG_IN_BUTTON, web_app: { url: HOST } };
 const buttonsLogin = {
@@ -73,9 +73,9 @@ const sendEvents = async (id, events) => {
         await bot.sendMessage(id, Strings.NEW_EVENT
             .replace("[[description]]", event.description)
             .replace("[[outcome_left]]", event.outcome_left)
-            .replace("[[outcome_left_chance]]", event.outcome_left_chance)
+            .replace("[[outcome_left_chance]]", Math.round(event.outcome_left_chance * 100))
             .replace("[[outcome_right]]", event.outcome_right)
-            .replace("[[outcome_right_chance]]", event.outcome_right_chance)
+            .replace("[[outcome_right_chance]]", Math.round(event.outcome_right_chance * 100))
             .replace("[[until]]", `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`),
         {
             reply_markup: {
@@ -138,6 +138,12 @@ bot.on("message", async msg => {
             await chooseAction(msg.chat.id);
             return;
         }
+        if(!await Bets.checkEvent(placing[msg.chat.id][0])) {
+            delete placing[msg.chat.id];
+            await bot.sendMessage(msg.chat.id, Strings.EVENT_FINISHED);
+            await chooseAction(msg.chat.id);
+            return;
+        }
         const user = await Bets.getUserByTelegramID(msg.chat.id);
         const amount = parseInt(msg.text);
         if(amount === NaN || amount < 1 || amount > user.balance)
@@ -172,6 +178,8 @@ bot.on("callback_query", async query => {
     if(query.data.length == 0) return;
     const outcome = query.data[0] == "L" ? 0 : 1;
     const event_id = parseInt(query.data.slice(1));
+    if(!await Bets.checkEvent(event_id))
+        return await bot.sendMessage(query.from.id, Strings.EVENT_FINISHED);
     if(await Bets.getBet(query.from.id, event_id))
         return await bot.sendMessage(query.from.id, Strings.ALREADY_PLACED);
     placing[query.from.id] = [event_id, outcome];
@@ -181,6 +189,12 @@ bot.on("callback_query", async query => {
 app.get("/", (_req, res) => res.sendFile(join(import.meta.dirname, "login.html")));
 app.get("/admin", (_req, res) => res.sendFile(join(import.meta.dirname, "admin.html")));
 app.post("/admin", async (req, res) => {
+    if(!req.body.description || !req.body.outcome_left
+        || !req.body.outcome_left_chance || !req.body.outcome_right
+        || !req.body.outcome_right_chance || !req.body.until
+        || !req.body.password
+    ) return res.status(400).send("bad request");
+    if(req.body.password != PASSWORD) return res.status(418).send("wrong password");
     /** @type {Bets.Event} */
     const eventJSON = {
         description: req.body.description,
@@ -199,6 +213,46 @@ app.post("/admin", async (req, res) => {
         }
     }
     res.send("ok!");
+});
+app.post("/admin/events", async (req, res) => {
+    if(!req.body.password || req.body.password != PASSWORD) return res.status(418).send("wrong password");
+    const events = await Bets.getAllOngoingEvents();
+    res.contentType("text/plain").send(events.map(x => `${x.id} ${x.description}
+
+L ${x.outcome_left_chance} ${x.outcome_left}
+R ${x.outcome_right_chance} ${x.outcome_right}
+until ${new Date(x.until).toUTCString()}`).join("\n\n\n"));
+});
+app.post("/admin/finish", async (req, res) => {
+    if(!req.body.password || req.body.password != PASSWORD) return res.status(418).send("wrong password");
+    if(!req.body.id || !req.body.outcome || !["L", "R"].includes(req.body.outcome)) return res.status(400).send("bad request");
+    const outcome = req.body.outcome == "L" ? 0 : 1;
+    if(!await Bets.checkEvent(parseInt(req.body.id)))
+        return res.status(400).send("event already closed");
+    const event = await Bets.getEventByID(parseInt(req.body.id));
+    if(!event) return res.status(500).send("error");
+    const bets = await Bets.getBets(parseInt(req.body.id));
+    for(const bet of bets) {
+        try {
+            if(bet.outcome == outcome) {
+                const earned = Math.round(bet.amount / (outcome == 0 ? event.outcome_left_chance : event.outcome_right_chance));
+                await Bets.addPointsToBalance(bet.by_user, earned);
+                await bot.sendMessage((await Bets.getUserByID(bet.by_user)).telegram_id,
+                    Strings.RIGHT_BET
+                    .replace("[[event]]", event.description)
+                    .replace("[[wrong]]", outcome == 0 ? event.outcome_right : event.outcome_left)
+                    .replace("[[right]]", outcome == 0 ? event.outcome_left : event.outcome_right)
+                    .replace("[[amount]]", earned))
+            } else
+                await bot.sendMessage((await Bets.getUserByID(bet.by_user)).telegram_id,
+                    Strings.WRONG_BET
+                    .replace("[[event]]", event.description)
+                    .replace("[[wrong]]", outcome == 0 ? event.outcome_right : event.outcome_left)
+                    .replace("[[right]]", outcome == 0 ? event.outcome_left : event.outcome_right))
+        } catch(e) { console.error(e); }
+    }
+    await Bets.finishEvent(event.id);
+    res.send("done");
 });
 
 app.listen(8055);
