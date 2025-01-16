@@ -191,6 +191,20 @@ export async function getAllOngoingEvents() {
 }
 
 /**
+ * Gets all events.
+ * 
+ * @returns {Event[]} All events
+ */
+export async function getAllEvents() {
+    let events = await adb.all(`SELECT * FROM events`);
+    events = events.map(x => {
+        x.until = new Date(x.until);
+        return x;
+    });
+    return events;
+}
+
+/**
  * Checks if the event is still ongoing.
  * 
  * @param {number} id The event ID

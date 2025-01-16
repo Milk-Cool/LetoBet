@@ -216,7 +216,7 @@ app.post("/admin", async (req, res) => {
 });
 app.post("/admin/events", async (req, res) => {
     if(!req.body.password || req.body.password != PASSWORD) return res.status(418).send("wrong password");
-    const events = await Bets.getAllOngoingEvents();
+    const events = await Bets.getAllEvents();
     res.contentType("text/plain").send(events.map(x => `${x.id} ${x.description}
 
 L ${x.outcome_left_chance} ${x.outcome_left}
