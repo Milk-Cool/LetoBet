@@ -120,7 +120,7 @@ bot.on("message", async msg => {
         await Bets.updateUserBalance(username, points);
         states[msg.chat.id] = State.LOGGED_IN;
         await bot.sendMessage(msg.chat.id, previous ? Strings.UPDATED_BALANCE : Strings.LOGGED_IN);
-        await sendEvents(msg.chat.id, await Bets.getAllOngoingEvents());
+        if(!previous) await sendEvents(msg.chat.id, await Bets.getAllOngoingEvents());
         await chooseAction(msg.chat.id);
     } catch(_) {
         await bot.sendMessage(msg.chat.id, Strings.WRONG_CREDENTIALS);
