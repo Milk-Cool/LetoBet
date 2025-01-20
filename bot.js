@@ -147,7 +147,8 @@ bot.on("message", async msg => {
         }
         const user = await Bets.getUserByTelegramID(msg.chat.id);
         const amount = parseInt(msg.text);
-        if(amount === NaN || amount < 1 || amount > user.balance)
+        console.log(amount);
+        if(!amount || amount === NaN || amount < 1 || amount > user.balance)
             return await bot.sendMessage(msg.chat.id, Strings.INVALID_BET, { reply_markup: buttonsPlacing });
         await Bets.placeBet(msg.chat.id, placing[msg.chat.id][0], placing[msg.chat.id][1], amount);
         await Bets.deductPointsFromBalance(user.id, amount);
